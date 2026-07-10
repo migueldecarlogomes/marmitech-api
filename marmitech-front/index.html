@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marmitech</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="content">
+            <nav>
+                <p class="brand">Marmitech</p>
+                <ul>
+                    <li><a href="#catalog">Cardápio</a></li>
+                    <li><a href="#about">Sobre</a></li>
+                    <li><a href="#feature">Vantagens</a></li>
+                    <li>
+                        <button type="button" id="cartToggle" class="cart-toggle" aria-label="Abrir carrinho">
+                            🛒 <span class="cart-count" id="cartCount">0</span>
+                        </button>
+                    </li>
+                    <li class="auth-area">
+                        <button type="button" id="authToggle" class="login-button">Login</button>
+                        <div class="account-menu" id="accountMenu" hidden>
+                            <button type="button" id="logoutBtn" class="account-menu-logout">Sair</button>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+            <div class="header-block">
+                <div class="text">
+                    <h2>Marmitas de verdade, prontas em minutos.</h2>
+                    <p>Refeições saudáveis e saborosas, feitas com ingredientes frescos e entregues na sua porta.</p>
+                    <a href="#catalog" class="hero-cta">Ver cardápio</a>
+                </div>
+                <img src="images/marmita1.jpg" alt="marmita">
+            </div>
+        </div>
+    </header>
+    <section class="catalog" id="catalog">
+        <div class="content">
+            <div class="title-wrapper-catalog reveal">
+                <p>Procure o que você quer</p>
+                <h3>Cardápio</h3>
+            </div>
+            <div class="card-wrapper">
+                <div class="card-item reveal" data-name="Arroz carreteiro com frango e legumes" data-price="24.90">
+                    <img src="images/marmita1.png" alt="marmita">
+                    <div class="card-content">
+                        <h3>Arroz carreteiro com frango e legumes</h3>
+                        <p>Arroz cremoso com frango desfiado, milho, ervilha e cenoura, temperado com ervas frescas.</p>
+                        <span class="card-price">R$ 24,90</span>
+                        <button type="button">Adicionar ao carrinho</button>
+                    </div>
+                </div>
+                <div class="card-item reveal" data-name="Estrogonofe de frango com arroz" data-price="26.90">
+                    <img src="images/marmita2.jpg" alt="marmita">
+                    <div class="card-content">
+                        <h3>Estrogonofe de frango com arroz</h3>
+                        <p>Estrogonofe cremoso de frango, acompanhado de arroz branco soltinho e batata palha.</p>
+                        <span class="card-price">R$ 26,90</span>
+                        <button type="button">Adicionar ao carrinho</button>
+                    </div>
+                </div>
+                <div class="card-item reveal" data-name="Tilápia grelhada com purê de batata" data-price="29.90">
+                    <img src="images/marmita3.webp" alt="marmita">
+                    <div class="card-content">
+                        <h3>Tilápia grelhada com purê de batata</h3>
+                        <p>Filé de tilápia grelhado ao limão, servido com purê de batata e brócolis no vapor.</p>
+                        <span class="card-price">R$ 29,90</span>
+                        <button type="button">Adicionar ao carrinho</button>
+                    </div>
+                </div>
+                <div class="card-item reveal" data-name="Frango grelhado com quinoa" data-price="27.90">
+                    <img src="images/marmita4.jpg" alt="marmita">
+                    <div class="card-content">
+                        <h3>Frango grelhado com quinoa</h3>
+                        <p>Peito de frango grelhado, quinoa refogada e mix de legumes salteados. Opção fit e proteica.</p>
+                        <span class="card-price">R$ 27,90</span>
+                        <button type="button">Adicionar ao carrinho</button>
+                    </div>
+                </div>
+                <div class="card-item reveal" data-name="Carne de panela com mandioca" data-price="28.90">
+                    <img src="images/marmita5.jpg" alt="marmita">
+                    <div class="card-content">
+                        <h3>Carne de panela com mandioca</h3>
+                        <p>Carne bovina cozida lentamente com mandioca, cenoura e temperos caseiros.</p>
+                        <span class="card-price">R$ 28,90</span>
+                        <button type="button">Adicionar ao carrinho</button>
+                    </div>
+                </div>
+                <div class="card-item reveal" data-name="Grão-de-bico com legumes assados" data-price="22.90">
+                    <img src="images/marmita6.jpg" alt="marmita">
+                    <div class="card-content">
+                        <h3>Grão-de-bico com legumes assados</h3>
+                        <p>Grão-de-bico, abobrinha, berinjela e pimentão assados, com azeite e ervas finas.</p>
+                        <span class="card-price">R$ 22,90</span>
+                        <button type="button">Adicionar ao carrinho</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="about" id="about">
+        <div class="content">
+            <div class="title-wrapper-about reveal">
+                <p>Conheça mais sobre nós</p>
+                <h3>Sobre</h3>
+            </div>
+            <div class="about-content reveal">
+                <div class="about-text">
+                    <div class="left">
+                        <img src="images/about.jpg" alt="About">
+                    </div>
+                    <div class="right">
+                        <h3>Sobre Nós</h3>
+                        <p>A Marmitech nasceu para facilitar o dia a dia de quem busca uma alimentação saudável sem abrir mão do sabor. Preparamos marmitas fresquinhas todos os dias, com ingredientes selecionados e porções balanceadas, pensadas para caber na sua rotina. Do preparo à entrega, cuidamos de cada detalhe para que você só precise se preocupar em aquecer e aproveitar.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="feature" id="feature">
+        <div class="content">
+            <div class="title-wrapper-feature reveal">
+                <p>Conheça nossas vantagens</p>
+                <h3>Vantagens</h3>
+            </div>
+            <div class="feature-card-block">
+                <div class="feature-card-item reveal">
+                    <div class="feature-header">
+                        <img src="images/feature.jpg" alt="Embalagem sustentável">
+                        <h3>Embalagem sustentável</h3>
+                    </div>
+                    <p>Usamos embalagens recicláveis e biodegradáveis, reduzindo o impacto ambiental em cada entrega.</p>
+                </div>
+                <div class="feature-card-item reveal">
+                    <div class="feature-header">
+                        <img src="images/feature2.jpg" alt="Entrega rápida">
+                        <h3>Entrega rápida</h3>
+                    </div>
+                    <p>Sua marmita sai fresquinha da cozinha e chega em até 40 minutos na sua casa.</p>
+                </div>
+                <div class="feature-card-item reveal">
+                    <div class="feature-header">
+                        <img src="images/feature3.webp" alt="Ingredientes frescos">
+                        <h3>Ingredientes frescos</h3>
+                    </div>
+                    <p>Selecionamos alimentos frescos diariamente, direto de fornecedores locais e de confiança.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer>
+        <div class="main">
+            <div class="content footer-link">
+                <div class="footer-company">
+                    <p>&copy; 2026 Marmitech. Todos os direitos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-modal">
+            <div class="auth-header">
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" id="loginTab" data-tab="login">Entrar</button>
+                    <button type="button" class="auth-tab" id="signupTab" data-tab="signup">Criar conta</button>
+                </div>
+                <button class="auth-close" id="authClose" type="button" aria-label="Fechar">&times;</button>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <label>E-mail
+                    <input type="email" name="email" required>
+                </label>
+                <label>Senha
+                    <input type="password" name="password" required minlength="6">
+                </label>
+                <p class="auth-error" id="loginError" hidden></p>
+                <button type="submit" class="auth-submit">Entrar</button>
+            </form>
+
+            <form id="signupForm" class="auth-form" hidden>
+                <label>Nome
+                    <input type="text" name="name" required>
+                </label>
+                <label>E-mail
+                    <input type="email" name="email" required>
+                </label>
+                <label>Senha
+                    <input type="password" name="password" required minlength="6">
+                </label>
+                <label>Confirmar senha
+                    <input type="password" name="confirmPassword" required minlength="6">
+                </label>
+                <p class="auth-error" id="signupError" hidden></p>
+                <button type="submit" class="auth-submit">Criar conta</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="cart-overlay" id="cartOverlay"></div>
+    <aside class="cart-drawer" id="cartDrawer">
+        <div class="cart-header">
+            <h3>Seu carrinho</h3>
+            <button class="cart-close" id="cartClose" type="button" aria-label="Fechar carrinho">&times;</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <p class="cart-empty">Seu carrinho está vazio.</p>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cartTotal">R$ 0,00</span>
+            </div>
+            <button class="cart-checkout-btn" id="cartCheckoutBtn" type="button" disabled>Finalizar pedido</button>
+        </div>
+    </aside>
+
+    <div class="checkout-overlay" id="checkoutOverlay">
+        <div class="checkout-modal">
+            <div class="checkout-header">
+                <h3>Finalizar pedido</h3>
+                <button class="checkout-close" id="checkoutClose" type="button" aria-label="Fechar">&times;</button>
+            </div>
+            <form id="checkoutForm">
+                <label>Nome completo
+                    <input type="text" name="name" required>
+                </label>
+                <label>Endereço de entrega
+                    <input type="text" name="address" required>
+                </label>
+                <label>Forma de pagamento
+                    <select name="payment">
+                        <option value="pix">Pix</option>
+                        <option value="cartao">Cartão de crédito</option>
+                        <option value="dinheiro">Dinheiro na entrega</option>
+                    </select>
+                </label>
+                <div class="checkout-summary" id="checkoutSummary"></div>
+                <button type="submit" class="checkout-submit">Confirmar pedido</button>
+            </form>
+            <div class="checkout-success" id="checkoutSuccess" hidden>
+                <h3>Pedido confirmado!</h3>
+                <p>Obrigado, <span id="successName"></span>! Seu pedido no valor de <span id="successTotal"></span> foi recebido e já está sendo preparado.</p>
+                <button class="checkout-done-btn" id="checkoutDoneBtn" type="button">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
