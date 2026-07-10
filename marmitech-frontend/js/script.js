@@ -1,6 +1,51 @@
+const API_BASE = 'http://localhost:5167/api';
+
+function getToken() {
+    return sessionStorage.getItem('marmitech_token');
+}
+
+function getCurrentUser() {
+    const raw = sessionStorage.getItem('marmitech_user');
+    return raw ? JSON.parse(raw) : null;
+}
+
+function setSession(token, user) {
+    sessionStorage.setItem('marmitech_token', token);
+    sessionStorage.setItem('marmitech_user', JSON.stringify(user));
+}
+
+function clearSession() {
+    sessionStorage.removeItem('marmitech_token');
+    sessionStorage.removeItem('marmitech_user');
+}
+
+// ---------- Animação de revelar elementos ao rolar a página ----------
+let revealObserver;
+
+function observeReveal(root = document) {
+    const els = root.querySelectorAll('.reveal:not(.visible)');
+    if (!('IntersectionObserver' in window)) {
+        els.forEach((el) => el.classList.add('visible'));
+        return;
+    }
+    if (!revealObserver) {
+        revealObserver = new IntersectionObserver((entries, obs) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    obs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+    }
+    els.forEach((el) => revealObserver.observe(el));
+}
+
+// ---------- Cardápio + Carrinho + Checkout ----------
 (function () {
     const cart = [];
 
+    const cardWrapper = document.getElementById('cardWrapper');
     const cartItemsEl = document.getElementById('cartItems');
     const cartTotalEl = document.getElementById('cartTotal');
     const cartCountEl = document.getElementById('cartCount');
@@ -58,12 +103,12 @@
         `).join('');
     }
 
-    function addToCart(name, price) {
-        const existing = cart.find((item) => item.name === name);
+    function addToCart(product) {
+        const existing = cart.find((item) => item.productId === product.id);
         if (existing) {
             existing.quantity += 1;
         } else {
-            cart.push({ name, price, quantity: 1 });
+            cart.push({ productId: product.id, name: product.name, price: product.price, quantity: 1 });
         }
         renderCart();
         openCart();
@@ -79,10 +124,46 @@
         cartOverlay.classList.remove('open');
     }
 
+    async function loadCatalog() {
+        try {
+            const res = await fetch(`${API_BASE}/products`);
+            if (!res.ok) throw new Error('Falha ao carregar cardápio');
+            const products = await res.json();
+            renderCatalog(products);
+        } catch (err) {
+            cardWrapper.innerHTML = '<p class="catalog-loading">Não foi possível carregar o cardápio. Verifique se a API está rodando em ' + API_BASE + '.</p>';
+            console.error(err);
+        }
+    }
+
+    function renderCatalog(products) {
+        cardWrapper.innerHTML = products.map((p) => `
+            <div class="card-item reveal" data-id="${p.id}">
+                <img src="${p.imageUrl}" alt="${p.name}">
+                <div class="card-content">
+                    <h3>${p.name}</h3>
+                    <p>${p.description}</p>
+                    <span class="card-price">${formatPrice(p.price)}</span>
+                    <button type="button">Adicionar ao carrinho</button>
+                </div>
+            </div>
+        `).join('');
+
+        cardWrapper.querySelectorAll('.card-item').forEach((card) => {
+            const button = card.querySelector('button[type="button"]');
+            button.addEventListener('click', () => {
+                const product = products.find((p) => p.id === Number(card.dataset.id));
+                addToCart(product);
+            });
+        });
+
+        observeReveal(cardWrapper);
+    }
+
     function openCheckout() {
         if (cart.length === 0) return;
 
-        const currentUser = window.MarmitechAuth && window.MarmitechAuth.getCurrentUser();
+        const currentUser = getCurrentUser();
         if (currentUser) {
             checkoutForm.elements['name'].value = currentUser.name;
         }
@@ -109,23 +190,13 @@
         checkoutOverlay.classList.remove('open');
     }
 
-    document.querySelectorAll('.card-item').forEach((card) => {
-        const button = card.querySelector('button[type="button"]');
-        if (!button) return;
-        button.addEventListener('click', () => {
-            const name = card.dataset.name;
-            const price = parseFloat(card.dataset.price);
-            addToCart(name, price);
-        });
-    });
-
     cartToggle.addEventListener('click', openCart);
     cartClose.addEventListener('click', closeCart);
     cartOverlay.addEventListener('click', closeCart);
     checkoutClose.addEventListener('click', closeCheckout);
 
     cartCheckoutBtn.addEventListener('click', () => {
-        const currentUser = window.MarmitechAuth && window.MarmitechAuth.getCurrentUser();
+        const currentUser = getCurrentUser();
         if (!currentUser) {
             closeCart();
             window.MarmitechAuth.requireLogin();
@@ -151,26 +222,76 @@
         renderCart();
     });
 
-    checkoutForm.addEventListener('submit', (event) => {
+    checkoutForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        successName.textContent = checkoutForm.elements['name'].value;
-        successTotal.textContent = formatPrice(getTotal());
-        checkoutForm.hidden = true;
-        checkoutSuccess.hidden = false;
-        cart.length = 0;
-        renderCart();
+
+        const token = getToken();
+        if (!token) {
+            closeCheckout();
+            window.MarmitechAuth.requireLogin();
+            return;
+        }
+
+        const payload = {
+            customerName: checkoutForm.elements['name'].value,
+            deliveryAddress: checkoutForm.elements['address'].value,
+            paymentMethod: checkoutForm.elements['payment'].value,
+            items: cart.map((item) => ({ productId: item.productId, quantity: item.quantity }))
+        };
+
+        const submitBtn = checkoutForm.querySelector('.checkout-submit');
+        submitBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_BASE}/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.status === 401) {
+                clearSession();
+                closeCheckout();
+                window.MarmitechAuth.updateUI();
+                window.MarmitechAuth.requireLogin();
+                return;
+            }
+
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                alert(error.message || 'Não foi possível finalizar o pedido.');
+                return;
+            }
+
+            const order = await res.json();
+
+            successName.textContent = order.customerName;
+            successTotal.textContent = formatPrice(order.total);
+            checkoutForm.hidden = true;
+            checkoutSuccess.hidden = false;
+            cart.length = 0;
+            renderCart();
+        } catch (err) {
+            console.error(err);
+            alert('Erro de conexão com o servidor. A API está rodando?');
+        } finally {
+            submitBtn.disabled = false;
+        }
     });
 
     checkoutDoneBtn.addEventListener('click', () => {
         closeCheckout();
         checkoutForm.reset();
     });
+
+    loadCatalog();
 })();
 
+// ---------- Autenticação ----------
 (function () {
-    const USERS_KEY = 'marmitech_users';
-    const SESSION_KEY = 'marmitech_current_user';
-
     const authOverlay = document.getElementById('authOverlay');
     const authToggle = document.getElementById('authToggle');
     const authClose = document.getElementById('authClose');
@@ -182,32 +303,6 @@
     const signupError = document.getElementById('signupError');
     const accountMenu = document.getElementById('accountMenu');
     const logoutBtn = document.getElementById('logoutBtn');
-
-    function getUsers() {
-        try {
-            return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-        } catch (e) {
-            return [];
-        }
-    }
-
-    function saveUsers(users) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    }
-
-    function getCurrentUser() {
-        const email = localStorage.getItem(SESSION_KEY);
-        if (!email) return null;
-        return getUsers().find((user) => user.email === email) || null;
-    }
-
-    function setCurrentUser(email) {
-        localStorage.setItem(SESSION_KEY, email);
-    }
-
-    function clearCurrentUser() {
-        localStorage.removeItem(SESSION_KEY);
-    }
 
     function showError(el, message) {
         el.textContent = message;
@@ -266,24 +361,39 @@
     loginTab.addEventListener('click', () => switchTab('login'));
     signupTab.addEventListener('click', () => switchTab('signup'));
 
-    loginForm.addEventListener('submit', (event) => {
+    loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        hideErrors();
+
         const email = loginForm.elements['email'].value.trim().toLowerCase();
         const password = loginForm.elements['password'].value;
-        const user = getUsers().find((u) => u.email === email && u.password === password);
 
-        if (!user) {
-            showError(loginError, 'E-mail ou senha inválidos.');
-            return;
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                showError(loginError, error.message || 'E-mail ou senha inválidos.');
+                return;
+            }
+
+            const data = await res.json();
+            setSession(data.token, { id: data.userId, name: data.name, email: data.email });
+            updateAuthUI();
+            closeAuth();
+        } catch (err) {
+            showError(loginError, 'Erro de conexão com o servidor. A API está rodando?');
         }
-
-        setCurrentUser(user.email);
-        updateAuthUI();
-        closeAuth();
     });
 
-    signupForm.addEventListener('submit', (event) => {
+    signupForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        hideErrors();
+
         const name = signupForm.elements['name'].value.trim();
         const email = signupForm.elements['email'].value.trim().toLowerCase();
         const password = signupForm.elements['password'].value;
@@ -294,21 +404,30 @@
             return;
         }
 
-        const users = getUsers();
-        if (users.some((u) => u.email === email)) {
-            showError(signupError, 'Já existe uma conta com este e-mail.');
-            return;
-        }
+        try {
+            const res = await fetch(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
 
-        users.push({ name, email, password });
-        saveUsers(users);
-        setCurrentUser(email);
-        updateAuthUI();
-        closeAuth();
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({}));
+                showError(signupError, error.message || 'Não foi possível criar a conta.');
+                return;
+            }
+
+            const data = await res.json();
+            setSession(data.token, { id: data.userId, name: data.name, email: data.email });
+            updateAuthUI();
+            closeAuth();
+        } catch (err) {
+            showError(signupError, 'Erro de conexão com o servidor. A API está rodando?');
+        }
     });
 
     logoutBtn.addEventListener('click', () => {
-        clearCurrentUser();
+        clearSession();
         accountMenu.hidden = true;
         updateAuthUI();
     });
@@ -321,6 +440,7 @@
 
     window.MarmitechAuth = {
         getCurrentUser,
+        updateUI: updateAuthUI,
         requireLogin: function () {
             switchTab('login');
             openAuth();
@@ -330,21 +450,5 @@
     updateAuthUI();
 })();
 
-(function () {
-    const revealEls = document.querySelectorAll('.reveal');
-    if (!('IntersectionObserver' in window) || revealEls.length === 0) {
-        revealEls.forEach((el) => el.classList.add('visible'));
-        return;
-    }
-
-    const observer = new IntersectionObserver((entries, obs) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-                obs.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.15 });
-
-    revealEls.forEach((el) => observer.observe(el));
-})();
+// ---------- Ativa a animação nos elementos estáticos da página (títulos, etc.) ----------
+observeReveal(document);
