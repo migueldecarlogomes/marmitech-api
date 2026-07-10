@@ -1,0 +1,6 @@
+@marmitech.backend_HostAddress = http://localhost:5167
+
+GET {{marmitech.backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
