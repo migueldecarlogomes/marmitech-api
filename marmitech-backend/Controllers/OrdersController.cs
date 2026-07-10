@@ -66,7 +66,21 @@ public class OrdersController : ControllerBase
 
         return Ok(ToResponse(order));
     }
+    [HttpGet]
+    public async Task<IActionResult> GetMyOrders()
+    {
+        var userId = GetUserId();
 
+        var orders = await _db.Orders
+            .Include(o => o.Items)
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+
+        var response = orders.Select(ToResponse).ToList();
+
+        return Ok(response);
+    }
     private int GetUserId()
     {
         var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
