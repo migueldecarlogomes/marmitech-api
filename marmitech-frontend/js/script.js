@@ -1,7 +1,7 @@
 const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 const API_BASE = isLocalHost
     ? 'http://localhost:5167/api'
-    : 'https://SEU-BACKEND.onrender.com/api';
+    : 'https://marmitech-api.onrender.com/api';
 
 function getToken() {
     return sessionStorage.getItem('marmitech_token');
