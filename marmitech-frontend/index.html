@@ -23,6 +23,7 @@
                     <li class="auth-area">
                         <button type="button" id="authToggle" class="login-button">Login</button>
                         <div class="account-menu" id="accountMenu" hidden>
+                            <button type="button" id="ordersBtn" class="account-menu-orders">Meus pedidos</button>
                             <button type="button" id="logoutBtn" class="account-menu-logout">Sair</button>
                         </div>
                     </li>
@@ -195,6 +196,16 @@
                 <p>Obrigado, <span id="successName"></span>! Seu pedido no valor de <span id="successTotal"></span> foi recebido e já está sendo preparado.</p>
                 <button class="checkout-done-btn" id="checkoutDoneBtn" type="button">Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <div class="orders-overlay" id="ordersOverlay">
+        <div class="orders-modal">
+            <div class="orders-header">
+                <h3>Meus pedidos</h3>
+                <button class="orders-close" id="ordersClose" type="button" aria-label="Fechar">&times;</button>
+            </div>
+            <div class="orders-list" id="ordersList"></div>
         </div>
     </div>
 

@@ -1,4 +1,7 @@
-const API_BASE = 'http://localhost:5167/api';
+const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const API_BASE = isLocalHost
+    ? 'http://localhost:5167/api'
+    : 'https://SEU-BACKEND.onrender.com/api';
 
 function getToken() {
     return sessionStorage.getItem('marmitech_token');
@@ -17,6 +20,14 @@ function setSession(token, user) {
 function clearSession() {
     sessionStorage.removeItem('marmitech_token');
     sessionStorage.removeItem('marmitech_user');
+}
+
+function formatPrice(value) {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatDate(value) {
+    return new Date(value).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 // ---------- Animação de revelar elementos ao rolar a página ----------
@@ -43,7 +54,22 @@ function observeReveal(root = document) {
 
 // ---------- Cardápio + Carrinho + Checkout ----------
 (function () {
-    const cart = [];
+    const CART_STORAGE_KEY = 'marmitech_cart';
+
+    function loadCart() {
+        try {
+            const raw = localStorage.getItem(CART_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (err) {
+            return [];
+        }
+    }
+
+    function saveCart() {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    }
+
+    const cart = loadCart();
 
     const cardWrapper = document.getElementById('cardWrapper');
     const cartItemsEl = document.getElementById('cartItems');
@@ -64,10 +90,6 @@ function observeReveal(root = document) {
     const successTotal = document.getElementById('successTotal');
     const checkoutDoneBtn = document.getElementById('checkoutDoneBtn');
 
-    function formatPrice(value) {
-        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
     function getTotal() {
         return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     }
@@ -78,6 +100,7 @@ function observeReveal(root = document) {
     }
 
     function renderCart() {
+        saveCart();
         updateCartCount();
         cartTotalEl.textContent = formatPrice(getTotal());
         cartCheckoutBtn.disabled = cart.length === 0;
@@ -287,6 +310,7 @@ function observeReveal(root = document) {
         checkoutForm.reset();
     });
 
+    renderCart();
     loadCatalog();
 })();
 
@@ -303,6 +327,10 @@ function observeReveal(root = document) {
     const signupError = document.getElementById('signupError');
     const accountMenu = document.getElementById('accountMenu');
     const logoutBtn = document.getElementById('logoutBtn');
+    const ordersBtn = document.getElementById('ordersBtn');
+    const ordersOverlay = document.getElementById('ordersOverlay');
+    const ordersClose = document.getElementById('ordersClose');
+    const ordersList = document.getElementById('ordersList');
 
     function showError(el, message) {
         el.textContent = message;
@@ -335,6 +363,65 @@ function observeReveal(root = document) {
         authOverlay.classList.remove('open');
     }
 
+    function renderOrders(orders) {
+        if (orders.length === 0) {
+            ordersList.innerHTML = '<p class="orders-empty">Você ainda não fez nenhum pedido.</p>';
+            return;
+        }
+
+        ordersList.innerHTML = orders.map((order) => `
+            <div class="order-card">
+                <div class="order-card-header">
+                    <h4>Pedido #${order.id}</h4>
+                    <span class="order-card-date">${formatDate(order.createdAt)}</span>
+                </div>
+                ${order.items.map((item) => `
+                    <div class="order-card-item">
+                        <span>${item.quantity}x ${item.productName}</span>
+                        <span>${formatPrice(item.unitPrice * item.quantity)}</span>
+                    </div>
+                `).join('')}
+                <div class="order-card-footer">
+                    <span>${order.paymentMethod} · ${order.deliveryAddress}</span>
+                    <span class="order-card-total">${formatPrice(order.total)}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function openOrders() {
+        ordersOverlay.classList.add('open');
+        ordersList.innerHTML = '<p class="orders-empty">Carregando pedidos...</p>';
+
+        const token = getToken();
+        try {
+            const res = await fetch(`${API_BASE}/orders`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.status === 401) {
+                clearSession();
+                updateAuthUI();
+                closeOrders();
+                switchTab('login');
+                openAuth();
+                return;
+            }
+
+            if (!res.ok) throw new Error('Falha ao carregar pedidos');
+
+            const orders = await res.json();
+            renderOrders(orders);
+        } catch (err) {
+            ordersList.innerHTML = '<p class="orders-empty">Não foi possível carregar seus pedidos. Verifique se a API está rodando.</p>';
+            console.error(err);
+        }
+    }
+
+    function closeOrders() {
+        ordersOverlay.classList.remove('open');
+    }
+
     function switchTab(tab) {
         const isLogin = tab === 'login';
         loginTab.classList.toggle('active', isLogin);
@@ -356,6 +443,16 @@ function observeReveal(root = document) {
     authClose.addEventListener('click', closeAuth);
     authOverlay.addEventListener('click', (event) => {
         if (event.target === authOverlay) closeAuth();
+    });
+
+    ordersBtn.addEventListener('click', () => {
+        accountMenu.hidden = true;
+        openOrders();
+    });
+
+    ordersClose.addEventListener('click', closeOrders);
+    ordersOverlay.addEventListener('click', (event) => {
+        if (event.target === ordersOverlay) closeOrders();
     });
 
     loginTab.addEventListener('click', () => switchTab('login'));
